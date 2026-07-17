@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Receipt Snap">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Receipt Snap — receipts to spreadsheet</title>
+<title>Receipt Snap: receipts to spreadsheet</title>
 <style>
   :root{
     --navy:#1F3A5F; --teal:#2E7D74; --ink:#182027; --grey:#5a6475;
@@ -134,15 +134,23 @@
       <label class="field" for="dateFmt">Date order when ambiguous</label>
       <select id="dateFmt"><option value="MDY">Month / Day / Year (US)</option><option value="DMY">Day / Month / Year</option></select>
       <div style="height:14px"></div>
-      <label class="field" for="gkey">Google Gemini API key (optional &mdash; sharper reading of photos)</label>
+      <label class="field" for="gkey">Google Gemini API key (optional, for sharper photo reading)</label>
       <input id="gkey" type="password" placeholder="Paste your own key to enable AI vision" autocomplete="off">
-      <div class="note">Optional. Your key stays on this device and calls Google directly &mdash; we never see it and there is no charge from us. Leave blank to use the built-in on-device reader (free, fully offline after first load).</div>
+      <div class="note">Optional. Your key stays on this device and calls Google directly. We never see it and there is no charge from us. Leave blank to use the built-in on-device reader (free, fully offline after first load).</div>
     </div>
   </details>
 
   <div class="privacy" id="a2hs" style="background:#f2ede2;border-color:#e2d7bd;color:#6d5a2e;margin-top:12px">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6d5a2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-    <span><b>Keep it handy:</b> open your browser menu and choose <b>Add to Home Screen</b> &mdash; Receipt Snap becomes an app icon and works offline.</span>
+    <span><b>Keep it handy:</b> open your browser menu and choose <b>Add to Home Screen</b>. Receipt Snap becomes an app icon and works offline.</span>
+  </div>
+
+
+  <div class="note" style="margin-top:14px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff">
+    <b>Please note:</b> Receipt Snap is a personal record-keeping helper, not accounting, tax or financial advice.
+    Text recognition can misread receipts, so always check each entry before saving. Verify your figures
+    against original receipts before using them for taxes or filings. Your data stays on this device (and is lost if
+    you clear browser data), so keep your original receipts and export backups regularly. Provided as-is, without warranty.
   </div>
 
   <div class="note" id="engineNote">Built-in reader loads on first scan (~a few MB, once). Best results: flat receipt, good light, fill the frame.</div>
