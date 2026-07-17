@@ -120,6 +120,8 @@
     </div>
     <div id="listZone"><div class="empty">No receipts yet. Tap the green button above to add your first one.</div></div>
     <div class="total-bar hide" id="totalBar"><span>Total</span><span id="grand">0.00</span></div>
+    <input id="restoreInp" class="hide" type="file" accept=".xlsx,.xls,.csv">
+    <button class="btn btn-ghost btn-sm" id="restoreBtn" style="margin-top:12px">Load entries from a saved file</button>
   </div>
 
   <details>
@@ -149,8 +151,8 @@
   <div class="note" style="margin-top:14px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff">
     <b>Please note:</b> This app helps you keep records. It does not give tax or financial advice.
     The camera can sometimes read a receipt wrong, so please check every entry before you save it.
-    Keep your paper receipts, and save your Excel file from time to time as a backup.
-    If you ever clear your browser's saved data, the list in this app will be erased.
+    Keep your paper receipts, and save your Excel file from time to time. Saved files stay safely on your phone.
+    If your browser's saved data is ever cleared, only the list inside this app is emptied. Your saved files are not touched, and you can bring one back with the button 'Load entries from a saved file'.
   </div>
 
   <div class="note" id="engineNote">The very first scan takes a little longer while the reader gets ready. For best results: lay the receipt flat, use good light, and hold the camera close.</div>
@@ -340,6 +342,31 @@
     var csv=rowsForExport().map(function(r){return r.map(function(c){return '"'+String(c==null?"":c).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
     var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
     a.download="expenses_"+new Date().toISOString().slice(0,10)+".csv";a.click();
+  };
+
+  $("restoreBtn").onclick=function(){$("restoreInp").click();};
+  $("restoreInp").onchange=function(e){
+    var file=e.target.files[0]; e.target.value=""; if(!file)return;
+    var rd=new FileReader();
+    rd.onload=function(){
+      try{
+        var wb=XLSX.read(new Uint8Array(rd.result),{type:"array"});
+        var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1});
+        var added=0;
+        rows.forEach(function(r){
+          if(!r||!r.length)return;
+          if(String(r[0]).toLowerCase()==="date")return;
+          var it={date:String(r[0]||""),merchant:String(r[1]||""),cat:String(r[2]||"Other"),
+                  amount:parseFloat(r[3])||0,cur:String(r[4]||settings.cur)};
+          if(!it.merchant&&!it.amount)return;
+          var dup=items.some(function(x){return x.date===it.date&&x.merchant===it.merchant&&x.amount===it.amount;});
+          if(!dup){items.push(it);added++;}
+        });
+        save();render();
+        alert(added?added+" entries loaded from your file.":"No new entries found in that file.");
+      }catch(err){alert("Sorry, that file could not be read. Please choose an Excel or CSV file saved by this app.");}
+    };
+    rd.readAsArrayBuffer(file);
   };
 
   render();
