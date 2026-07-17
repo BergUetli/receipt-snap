@@ -129,8 +129,12 @@
     <div class="set-body">
       <label class="field" for="curSel">Default currency</label>
       <select id="curSel">
-        <option value="USD">USD $</option><option value="CHF">CHF</option>
-        <option value="EUR">EUR &euro;</option><option value="GBP">GBP &pound;</option>
+        <option>USD</option><option>CHF</option><option>EUR</option><option>GBP</option>
+        <option>CAD</option><option>AUD</option><option>JPY</option><option>INR</option>
+        <option>SEK</option><option>NOK</option><option>DKK</option><option>PLN</option>
+        <option>CZK</option><option>HUF</option><option>AED</option><option>SGD</option>
+        <option>HKD</option><option>NZD</option><option>ZAR</option><option>BRL</option>
+        <option>MXN</option><option>TRY</option>
       </select>
       <div style="height:12px"></div>
       <label class="field" for="dateFmt">How dates are written</label>
@@ -159,6 +163,7 @@
 </div>
 
 <div class="foot">
+  <div style="text-align:center;font-size:11.5px;color:var(--grey);margin:0 0 7px">Save each receipt to your list first. When all are done:</div>
   <div class="foot-in">
     <button class="btn btn-ghost btn-sm" id="csvBtn">Save as CSV</button>
     <button class="btn btn-primary btn-sm" id="xlsxBtn">Save as Excel file</button>
@@ -166,12 +171,29 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.full.min.js"></script>
 <script>
 (function(){
   var LSK="receiptsnap.v1", SET="receiptsnap.settings.v1";
-  var CATS=["Cost of Goods","Shipping & Postage","Supplies & Materials","Software & Subscriptions",
-    "Advertising & Promotion","Office & Home Office","Travel & Mileage","Meals","Professional Services","Other"];
+  var CATS=["Groceries","Dining & Cafe","Health & Fitness","Transport","Housing & Rent",
+    "Utilities & Phone","Shopping & Clothing","Entertainment","Travel","Business","Other"];
+  var CURR=["USD","CHF","EUR","GBP","CAD","AUD","JPY","INR","SEK","NOK","DKK","PLN","CZK","HUF","AED","SGD","HKD","NZD","ZAR","BRL","MXN","TRY"];
+  function todayStr(){var d=new Date();return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);}
+  function guessCat(text){
+    var t=(text||"").toLowerCase();
+    var rules=[[/gym|fitness|sport|training|yoga|pilates/, "Health & Fitness"],
+      [/pharma|apotheke|drogerie|clinic|arzt|doctor|dental/, "Health & Fitness"],
+      [/migros|coop|aldi|lidl|denner|spar|grocer|supermark|whole foods|market/, "Groceries"],
+      [/restaurant|cafe|coffee|pizz|burger|kebab|bar |bistro|mcdonald|starbucks|bakery|baecker/, "Dining & Cafe"],
+      [/sbb|cff|train|uber|taxi|bus |metro|parking|fuel|petrol|gas station|shell|esso|bp /, "Transport"],
+      [/hotel|airbnb|airline|flight|booking\.|hostel/, "Travel"],
+      [/rent|miete|lease/, "Housing & Rent"],
+      [/swisscom|sunrise|salt|vodafone|electric|energie|internet|telecom/, "Utilities & Phone"],
+      [/h&m|zara|c&a|clothing|fashion|schuhe|shoe|apparel/, "Shopping & Clothing"],
+      [/cinema|kino|netflix|spotify|theat|concert|museum/, "Entertainment"]];
+    for(var i=0;i<rules.length;i++){if(rules[i][0].test(t))return rules[i][1];}
+    return "Other";
+  }
   var items=load(LSK,[]), settings=load(SET,{cur:"USD",fmt:"MDY",gkey:""});
   var worker=null;
 
@@ -278,19 +300,20 @@
     for(var i=0;i<Math.min(4,lines.length);i++){var l=lines[i];
       var letters=(l.match(/[A-Za-z]/g)||[]).length;
       if(letters>=2 && !/\d{2}[-./]\d/.test(l) && l.toLowerCase().indexOf("date")<0 && amountsOf(l).length===0){merchant=l;break;}}
-    return {merchant:merchant,date:parseDate(lines),total:total,cur:cur,cat:"Other"};
+    return {merchant:merchant,date:parseDate(lines),total:total,cur:cur,cat:guessCat(text)};
   }
 
   function showReview(id,dataUrl,p){
     var card=$(id); if(!card)return;
     var opts=CATS.map(function(c){return '<option'+(c===p.cat?' selected':'')+'>'+c+'</option>';}).join("");
-    var curOpts=["USD","CHF","EUR","GBP"].map(function(c){return '<option'+(c===p.cur?' selected':'')+'>'+c+'</option>';}).join("");
+    var curOpts=CURR.map(function(c){return '<option'+(c===p.cur?' selected':'')+'>'+c+'</option>';}).join("");
+    var dval=/^\d{4}-\d{2}-\d{2}$/.test(p.date)?p.date:todayStr();
     card.innerHTML=
       '<div class="review-head"><span>Please check this</span><span class="pill">from your photo</span></div>'+
       '<img class="thumb" src="'+dataUrl+'" alt="receipt">'+
       '<label class="field">Merchant</label><input id="'+id+'_m" value="'+esc(p.merchant)+'" placeholder="Store name">'+
       '<div style="height:10px"></div>'+
-      '<div class="grid2"><div><label class="field">Date</label><input id="'+id+'_d" value="'+esc(p.date)+'" placeholder="YYYY-MM-DD"></div>'+
+      '<div class="grid2"><div><label class="field">Date</label><input id="'+id+'_d" type="date" value="'+dval+'"></div>'+
       '<div><label class="field">Amount</label><input id="'+id+'_a" inputmode="decimal" value="'+esc(p.total)+'" placeholder="0.00"></div></div>'+
       '<div style="height:10px"></div>'+
       '<div class="grid2"><div><label class="field">Category</label><select id="'+id+'_c">'+opts+'</select></div>'+
@@ -301,10 +324,21 @@
     card.querySelector("[data-save]").onclick=function(){
       items.unshift({merchant:$(id+"_m").value.trim(),date:$(id+"_d").value.trim(),
         amount:parseFloat($(id+"_a").value)||0,cat:$(id+"_c").value,cur:$(id+"_cur").value});
-      save();card.remove();render();};
+      save();card.remove();render();
+      toast("Saved. "+items.length+" receipt"+(items.length===1?"":"s")+" in your list. Ready for the next one.");
+      window.scrollTo({top:0,behavior:"smooth"});};
     card.querySelector("[data-x]").onclick=function(){card.remove();};
   }
 
+  var toastTimer=null;
+  function toast(msg){
+    var el=document.getElementById("toast");
+    if(!el){el=document.createElement("div");el.id="toast";
+      el.style.cssText="position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#1F3A5F;color:#fff;padding:11px 18px;border-radius:12px;font-size:14px;font-weight:600;z-index:99;max-width:88%;text-align:center";
+      document.body.appendChild(el);}
+    el.textContent=msg;el.style.display="block";
+    clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.style.display="none";},2600);
+  }
   function render(){
     var z=$("listZone");
     if(!items.length){z.innerHTML='<div class="empty">No receipts yet. Tap the green button above to add your first one.</div>';
@@ -332,8 +366,21 @@
   }
   $("xlsxBtn").onclick=function(){
     if(!items.length)return alert("Please add a receipt first.");
-    var ws=XLSX.utils.aoa_to_sheet(rowsForExport());
-    ws["!cols"]=[{wch:12},{wch:26},{wch:20},{wch:10},{wch:9}];
+    var rows=rowsForExport();
+    var ws=XLSX.utils.aoa_to_sheet(rows);
+    ws["!cols"]=[{wch:14},{wch:30},{wch:22},{wch:12},{wch:10}];
+    ws["!rows"]=rows.map(function(_,i){return {hpt:i===0?30:26};});
+    var range=XLSX.utils.decode_range(ws["!ref"]);
+    for(var r=range.s.r;r<=range.e.r;r++){
+      for(var c=range.s.c;c<=range.e.c;c++){
+        var addr=XLSX.utils.encode_cell({r:r,c:c});
+        if(!ws[addr])continue;
+        ws[addr].s=(r===0)
+          ?{font:{sz:15,bold:true,color:{rgb:"FFFFFF"}},fill:{fgColor:{rgb:"1F3A5F"}},alignment:{vertical:"center"}}
+          :{font:{sz:14},alignment:{vertical:"center"}};
+        if(r>0&&c===3)ws[addr].s.numFmt="#,##0.00";
+      }
+    }
     var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Expenses");
     XLSX.writeFile(wb,"expenses_"+new Date().toISOString().slice(0,10)+".xlsx");
   };
