@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1F3A5F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Receipt Snap">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Receipt Snap — receipts to spreadsheet</title>
+<style>
+  :root{
+    --navy:#1F3A5F; --teal:#2E7D74; --ink:#182027; --grey:#5a6475;
+    --line:#e4e8ee; --bg:#f6f7f9; --card:#ffffff; --amber:#c47b2e; --danger:#b23b3b;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;-webkit-text-size-adjust:100%}
+  .wrap{max-width:600px;margin:0 auto;padding:16px 14px 120px}
+  header{display:flex;align-items:center;gap:10px;padding:6px 2px 14px}
+  .logo{width:38px;height:38px;border-radius:10px;background:var(--navy);display:flex;
+    align-items:center;justify-content:center;color:#fff;flex:none}
+  h1{font-size:19px;margin:0;font-weight:700;letter-spacing:-.2px}
+  .sub{font-size:12.5px;color:var(--grey);margin:1px 0 0}
+  .privacy{display:flex;align-items:center;gap:7px;background:#eaf3f1;border:1px solid #cfe4df;
+    color:#215e56;border-radius:10px;padding:9px 11px;font-size:12.5px;margin:0 0 14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px;margin:0 0 12px}
+  .btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;
+    border:none;border-radius:12px;padding:16px;font-size:16.5px;font-weight:600;
+    cursor:pointer;font-family:inherit}
+  .btn-primary{background:var(--teal);color:#fff}
+  .btn-primary:active{background:#256760}
+  .btn-ghost{background:#fff;color:var(--navy);border:1.5px solid var(--line);font-weight:600}
+  .btn-row{display:flex;gap:9px}
+  .btn-sm{padding:12px;font-size:14px;border-radius:11px}
+  label.field{display:block;font-size:11.5px;font-weight:600;color:var(--grey);
+    text-transform:uppercase;letter-spacing:.4px;margin:0 0 4px}
+  input,select{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;
+    font-size:16px;font-family:inherit;color:var(--ink);background:#fff}
+  input:focus,select:focus{outline:none;border-color:var(--teal)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .review-head{display:flex;align-items:center;gap:8px;font-weight:700;margin:0 0 10px;font-size:15px}
+  .pill{font-size:11px;background:#eef1f5;color:var(--grey);border-radius:20px;padding:3px 9px;font-weight:600}
+  .thumb{width:100%;max-height:150px;object-fit:contain;background:#f0f2f5;border-radius:10px;margin:0 0 10px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--grey);
+    padding:0 6px 8px;font-weight:600}
+  td{padding:9px 6px;border-top:1px solid var(--line);vertical-align:top}
+  td.amt{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .m-name{font-weight:600}
+  .m-meta{font-size:12px;color:var(--grey)}
+  .x{color:var(--danger);cursor:pointer;font-size:13px;border:none;background:none;padding:4px}
+  .total-bar{display:flex;justify-content:space-between;align-items:center;font-weight:700;
+    font-size:17px;padding:12px 6px 2px;border-top:2px solid var(--navy);margin-top:6px}
+  .muted{color:var(--grey);font-size:13px}
+  .prog{height:6px;background:#eceff3;border-radius:6px;overflow:hidden;margin:8px 0 2px}
+  .prog > i{display:block;height:100%;width:0;background:var(--teal);transition:width .2s}
+  details{border:1px solid var(--line);border-radius:12px;background:#fff;margin:0 0 12px}
+  summary{padding:13px 14px;font-weight:600;cursor:pointer;font-size:14px;list-style:none}
+  summary::-webkit-details-marker{display:none}
+  details[open] summary{border-bottom:1px solid var(--line)}
+  .set-body{padding:14px}
+  .foot{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);
+    border-top:1px solid var(--line);padding:11px 14px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  .foot-in{max-width:600px;margin:0 auto;display:flex;gap:9px}
+  svg{display:block}
+  .hide{display:none}
+  .note{font-size:12px;color:var(--grey);margin:8px 2px 0}
+  .empty{text-align:center;color:var(--grey);padding:26px 10px;font-size:14px}
+  .steps{display:flex;align-items:center;gap:6px;margin:12px 2px 0}
+  .step{display:flex;align-items:center;gap:7px;flex:1}
+  .step .n{width:22px;height:22px;border-radius:50%;background:var(--navy);color:#fff;
+    font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none}
+  .step span{font-size:12.5px;color:var(--grey);font-weight:500}
+  .step .arr{color:#c3cbd6;flex:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13l3 3v13H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
+    </div>
+    <div>
+      <h1>Receipt Snap</h1>
+      <div class="sub">Snap a receipt &rarr; it lands in your spreadsheet</div>
+    </div>
+  </header>
+
+  <div class="privacy">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#215e56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v5c0 4-3 7-7 9-4-2-7-5-7-9V7z"/><path d="M9 12l2 2 4-4"/></svg>
+    <span>Runs entirely on your device. No account, no upload, nothing leaves your phone.</span>
+  </div>
+
+  <input id="cam" class="hide" type="file" accept="image/*" capture="environment" multiple>
+  <button class="btn btn-primary" id="snapBtn">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    Snap or add receipt
+  </button>
+  <div class="steps">
+    <div class="step"><div class="n">1</div><span>Snap</span></div>
+    <div class="arr" aria-hidden="true">&rarr;</div>
+    <div class="step"><div class="n">2</div><span>Check</span></div>
+    <div class="arr" aria-hidden="true">&rarr;</div>
+    <div class="step"><div class="n">3</div><span>Export</span></div>
+  </div>
+  <div class="note">On a phone this opens the camera; on a laptop, your files. Add several at once.</div>
+
+  <div id="reviewZone"></div>
+
+  <div class="card" style="margin-top:14px">
+    <div class="review-head" style="justify-content:space-between">
+      <span>Your expenses</span>
+      <span class="pill" id="count">0 items</span>
+    </div>
+    <div id="listZone"><div class="empty">No receipts yet. Snap your first one above.</div></div>
+    <div class="total-bar hide" id="totalBar"><span>Total</span><span id="grand">0.00</span></div>
+  </div>
+
+  <details>
+    <summary>Settings &amp; optional AI vision</summary>
+    <div class="set-body">
+      <label class="field" for="curSel">Default currency</label>
+      <select id="curSel">
+        <option value="USD">USD $</option><option value="CHF">CHF</option>
+        <option value="EUR">EUR &euro;</option><option value="GBP">GBP &pound;</option>
+      </select>
+      <div style="height:12px"></div>
+      <label class="field" for="dateFmt">Date order when ambiguous</label>
+      <select id="dateFmt"><option value="MDY">Month / Day / Year (US)</option><option value="DMY">Day / Month / Year</option></select>
+      <div style="height:14px"></div>
+      <label class="field" for="gkey">Google Gemini API key (optional &mdash; sharper reading of photos)</label>
+      <input id="gkey" type="password" placeholder="Paste your own key to enable AI vision" autocomplete="off">
+      <div class="note">Optional. Your key stays on this device and calls Google directly &mdash; we never see it and there is no charge from us. Leave blank to use the built-in on-device reader (free, fully offline after first load).</div>
+    </div>
+  </details>
+
+  <div class="privacy" id="a2hs" style="background:#f2ede2;border-color:#e2d7bd;color:#6d5a2e;margin-top:12px">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6d5a2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+    <span><b>Keep it handy:</b> open your browser menu and choose <b>Add to Home Screen</b> &mdash; Receipt Snap becomes an app icon and works offline.</span>
+  </div>
+
+  <div class="note" id="engineNote">Built-in reader loads on first scan (~a few MB, once). Best results: flat receipt, good light, fill the frame.</div>
+</div>
+
+<div class="foot">
+  <div class="foot-in">
+    <button class="btn btn-ghost btn-sm" id="csvBtn">Export CSV</button>
+    <button class="btn btn-primary btn-sm" id="xlsxBtn">Export to Excel</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+(function(){
+  var LSK="receiptsnap.v1", SET="receiptsnap.settings.v1";
+  var CATS=["Cost of Goods","Shipping & Postage","Supplies & Materials","Software & Subscriptions",
+    "Advertising & Promotion","Office & Home Office","Travel & Mileage","Meals","Professional Services","Other"];
+  var items=load(LSK,[]), settings=load(SET,{cur:"USD",fmt:"MDY",gkey:""});
+  var worker=null;
+
+  function load(k,d){try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}}
+  function save(){localStorage.setItem(LSK,JSON.stringify(items));localStorage.setItem(SET,JSON.stringify(settings));}
+  function $(id){return document.getElementById(id);}
+  function esc(s){return (s||"").replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+
+  $("curSel").value=settings.cur; $("dateFmt").value=settings.fmt; $("gkey").value=settings.gkey||"";
+  $("curSel").onchange=function(){settings.cur=this.value;save();};
+  $("dateFmt").onchange=function(){settings.fmt=this.value;save();};
+  $("gkey").oninput=function(){settings.gkey=this.value.trim();save();
+    $("engineNote").textContent=settings.gkey?"AI vision on: photos are read with your Gemini key.":"Built-in reader loads on first scan (~a few MB, once).";};
+
+  $("snapBtn").onclick=function(){$("cam").click();};
+  $("cam").onchange=function(e){var fs=Array.prototype.slice.call(e.target.files||[]);e.target.value="";fs.forEach(handleFile);};
+
+  function downscale(file,max,cb){
+    var img=new Image(), url=URL.createObjectURL(file);
+    img.onload=function(){
+      var s=Math.min(1,max/Math.max(img.width,img.height));
+      var w=Math.round(img.width*s),h=Math.round(img.height*s);
+      var c=document.createElement("canvas");c.width=w;c.height=h;
+      c.getContext("2d").drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      cb(c.toDataURL("image/jpeg",0.85));
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);cb(null);};
+    img.src=url;
+  }
+
+  function handleFile(file){
+    if(!/^image\//.test(file.type))return;
+    var id="r"+Date.now()+Math.random().toString(36).slice(2,6);
+    var card=document.createElement("div");card.className="card";card.id=id;
+    card.innerHTML='<div class="review-head"><span>Reading receipt&hellip;</span></div>'+
+      '<div class="prog"><i id="'+id+'_p"></i></div><div class="muted" id="'+id+'_s">Starting&hellip;</div>';
+    $("reviewZone").prepend(card);
+    downscale(file,1600,function(dataUrl){
+      if(!dataUrl){card.remove();return;}
+      var useAI=!!settings.gkey;
+      var run=useAI?geminiRead(dataUrl):tesseractRead(dataUrl,id);
+      run.then(function(parsed){ showReview(id,dataUrl,parsed); })
+         .catch(function(err){ tesseractRead(dataUrl,id).then(function(p){showReview(id,dataUrl,p);})
+             .catch(function(){ showReview(id,dataUrl,{merchant:"",date:"",total:"",cur:settings.cur,cat:"Other"}); }); });
+    });
+  }
+
+  function tesseractRead(dataUrl,id){
+    return new Promise(function(res,rej){
+      (worker?Promise.resolve(worker):Tesseract.createWorker("eng",1,{logger:function(m){
+          if(m.status&&$(id+"_s"))$(id+"_s").textContent=m.status.replace(/_/g," ");
+          if(m.progress!=null&&$(id+"_p"))$(id+"_p").style.width=Math.round(m.progress*100)+"%";
+        }}).then(function(w){worker=w;return w;})
+      ).then(function(w){return w.recognize(dataUrl);})
+       .then(function(r){res(parseText(r.data.text));})
+       .catch(rej);
+    });
+  }
+
+  function geminiRead(dataUrl){
+    var b64=dataUrl.split(",")[1];
+    var body={contents:[{parts:[
+      {text:"Extract this receipt as strict JSON only, no prose: {\"merchant\":\"\",\"date\":\"YYYY-MM-DD\",\"total\":0,\"currency\":\"\"}. total is the final amount paid as a number. If unsure use empty string or 0."},
+      {inline_data:{mime_type:"image/jpeg",data:b64}}
+    ]}]};
+    return fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key="+encodeURIComponent(settings.gkey),
+      {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+      .then(function(r){return r.json();})
+      .then(function(j){
+        var t=(((j.candidates||[])[0]||{}).content||{}).parts;
+        t=t&&t[0]?t[0].text:"";
+        var m=t.match(/\{[\s\S]*\}/); if(!m)throw new Error("no json");
+        var o=JSON.parse(m[0]);
+        return {merchant:o.merchant||"",date:o.date||"",total:(o.total||o.total===0)?String(o.total):"",
+                cur:o.currency||settings.cur,cat:"Other"};
+      });
+  }
+
+  var AMT=/(?:CHF|USD|EUR|GBP)?\s*[$€£]?\s*(\d{1,4}[.,]\d{2})\b/g;
+  function amountsOf(line){var out=[],m;AMT.lastIndex=0;while((m=AMT.exec(line))){out.push(parseFloat(m[1].replace(",",".")));}return out;}
+  function parseDate(lines){
+    for(var i=0;i<lines.length;i++){var l=lines[i],m;
+      if((m=l.match(/\b(\d{4})[-./](\d{1,2})[-./](\d{1,2})\b/))){
+        var y=+m[1],mo=+m[2],d=+m[3]; if(mo<=12&&d<=31)return pad(y,mo,d);}
+      if((m=l.match(/\b(\d{1,2})[-./](\d{1,2})[-./](\d{2,4})\b/))){
+        var a=+m[1],b=+m[2],yy=+m[3]; if(yy<100)yy+=2000; var mon,day;
+        if(a>12&&b<=12){day=a;mon=b;} else if(b>12&&a<=12){mon=a;day=b;}
+        else if(settings.fmt==="MDY"){mon=a;day=b;} else {day=a;mon=b;}
+        if(mon>=1&&mon<=12&&day>=1&&day<=31)return pad(yy,mon,day);}
+    } return "";
+  }
+  function pad(y,m,d){return y+"-"+("0"+m).slice(-2)+"-"+("0"+d).slice(-2);}
+  function parseText(text){
+    var lines=text.split(/\n/).map(function(s){return s.trim();}).filter(Boolean);
+    var cur=settings.cur;
+    var map=[["CHF","CHF"],["$","USD"],["€","EUR"],["£","GBP"]];
+    for(var k=0;k<map.length;k++){if(lines.some(function(l){return l.indexOf(map[k][0])>=0;})){cur=map[k][1];break;}}
+    var total="";
+    lines.forEach(function(l){var low=l.toLowerCase();
+      if(low.indexOf("total")>=0&&low.indexOf("sub")<0){var a=amountsOf(l);if(a.length)total=Math.max.apply(null,a).toFixed(2);}});
+    if(total===""){var all=[];lines.forEach(function(l){all=all.concat(amountsOf(l));});if(all.length)total=Math.max.apply(null,all).toFixed(2);}
+    var merchant="";
+    for(var i=0;i<Math.min(4,lines.length);i++){var l=lines[i];
+      var letters=(l.match(/[A-Za-z]/g)||[]).length;
+      if(letters>=2 && !/\d{2}[-./]\d/.test(l) && l.toLowerCase().indexOf("date")<0 && amountsOf(l).length===0){merchant=l;break;}}
+    return {merchant:merchant,date:parseDate(lines),total:total,cur:cur,cat:"Other"};
+  }
+
+  function showReview(id,dataUrl,p){
+    var card=$(id); if(!card)return;
+    var opts=CATS.map(function(c){return '<option'+(c===p.cat?' selected':'')+'>'+c+'</option>';}).join("");
+    var curOpts=["USD","CHF","EUR","GBP"].map(function(c){return '<option'+(c===p.cur?' selected':'')+'>'+c+'</option>';}).join("");
+    card.innerHTML=
+      '<div class="review-head"><span>Check &amp; save</span><span class="pill">just read</span></div>'+
+      '<img class="thumb" src="'+dataUrl+'" alt="receipt">'+
+      '<label class="field">Merchant</label><input id="'+id+'_m" value="'+esc(p.merchant)+'" placeholder="Store name">'+
+      '<div style="height:10px"></div>'+
+      '<div class="grid2"><div><label class="field">Date</label><input id="'+id+'_d" value="'+esc(p.date)+'" placeholder="YYYY-MM-DD"></div>'+
+      '<div><label class="field">Amount</label><input id="'+id+'_a" inputmode="decimal" value="'+esc(p.total)+'" placeholder="0.00"></div></div>'+
+      '<div style="height:10px"></div>'+
+      '<div class="grid2"><div><label class="field">Category</label><select id="'+id+'_c">'+opts+'</select></div>'+
+      '<div><label class="field">Currency</label><select id="'+id+'_cur">'+curOpts+'</select></div></div>'+
+      '<div style="height:12px"></div>'+
+      '<div class="btn-row"><button class="btn btn-ghost btn-sm" data-x="'+id+'">Discard</button>'+
+      '<button class="btn btn-primary btn-sm" data-save="'+id+'">Save to list</button></div>';
+    card.querySelector("[data-save]").onclick=function(){
+      items.unshift({merchant:$(id+"_m").value.trim(),date:$(id+"_d").value.trim(),
+        amount:parseFloat($(id+"_a").value)||0,cat:$(id+"_c").value,cur:$(id+"_cur").value});
+      save();card.remove();render();};
+    card.querySelector("[data-x]").onclick=function(){card.remove();};
+  }
+
+  function render(){
+    var z=$("listZone");
+    if(!items.length){z.innerHTML='<div class="empty">No receipts yet. Snap your first one above.</div>';
+      $("totalBar").classList.add("hide");$("count").textContent="0 items";return;}
+    var byCur={};
+    var rows=items.map(function(it,i){
+      byCur[it.cur]=(byCur[it.cur]||0)+(it.amount||0);
+      return '<tr><td><div class="m-name">'+esc(it.merchant||"(no name)")+'</div>'+
+        '<div class="m-meta">'+esc(it.date||"")+(it.date&&it.cat?" &middot; ":"")+esc(it.cat||"")+'</div></td>'+
+        '<td class="amt">'+esc(it.cur)+" "+(it.amount||0).toFixed(2)+'</td>'+
+        '<td style="width:24px"><button class="x" data-del="'+i+'">Remove</button></td></tr>';
+    }).join("");
+    z.innerHTML='<table><thead><tr><th>Merchant</th><th style="text-align:right">Amount</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
+    Array.prototype.forEach.call(z.querySelectorAll("[data-del]"),function(b){
+      b.onclick=function(){items.splice(+b.getAttribute("data-del"),1);save();render();};});
+    var g=Object.keys(byCur).map(function(c){return c+" "+byCur[c].toFixed(2);}).join("  +  ");
+    $("grand").textContent=g;$("totalBar").classList.remove("hide");
+    $("count").textContent=items.length+(items.length===1?" item":" items");
+  }
+
+  function rowsForExport(){
+    var head=["Date","Merchant","Category","Amount","Currency"];
+    var body=items.map(function(it){return [it.date,it.merchant,it.cat,it.amount,it.cur];});
+    return [head].concat(body);
+  }
+  $("xlsxBtn").onclick=function(){
+    if(!items.length)return alert("Add a receipt first.");
+    var ws=XLSX.utils.aoa_to_sheet(rowsForExport());
+    ws["!cols"]=[{wch:12},{wch:26},{wch:20},{wch:10},{wch:9}];
+    var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Expenses");
+    XLSX.writeFile(wb,"expenses_"+new Date().toISOString().slice(0,10)+".xlsx");
+  };
+  $("csvBtn").onclick=function(){
+    if(!items.length)return alert("Add a receipt first.");
+    var csv=rowsForExport().map(function(r){return r.map(function(c){return '"'+String(c==null?"":c).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
+    var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+    a.download="expenses_"+new Date().toISOString().slice(0,10)+".csv";a.click();
+  };
+
+  render();
+  if("serviceWorker" in navigator && location.protocol==="https:"){
+    navigator.serviceWorker.register("sw.js").catch(function(){});
+  }
+})();
+</script>
+</body>
+</html>
