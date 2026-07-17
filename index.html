@@ -195,6 +195,46 @@
     return "Other";
   }
   var items=load(LSK,[]), settings=load(SET,{cur:"USD",fmt:"MDY",gkey:""});
+  var MKEY="receiptsnap.vendors.v1"; var mem=load(MKEY,{});
+  function normM(x){return (x||"").toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,24);}
+  function edist(a,b,max){
+    if(Math.abs(a.length-b.length)>max)return max+1;
+    var prev=[],cur=[],i,j;
+    for(j=0;j<=b.length;j++)prev[j]=j;
+    for(i=1;i<=a.length;i++){
+      cur[0]=i;var best=cur[0];
+      for(j=1;j<=b.length;j++){
+        cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
+        if(cur[j]<best)best=cur[j];
+      }
+      if(best>max)return max+1;
+      var t=prev;prev=cur;cur=t;
+    }
+    return prev[b.length];
+  }
+  function memGet(name){
+    var k=normM(name); if(!k)return null;
+    if(mem[k])return mem[k];
+    var ks=Object.keys(mem);
+    for(var i=0;i<ks.length;i++){
+      if(ks[i].length>=4 && (k.indexOf(ks[i])>=0||ks[i].indexOf(k)>=0))return mem[ks[i]];
+    }
+    if(k.length>=5){
+      for(var i2=0;i2<ks.length;i2++){
+        var kk=ks[i2]; if(kk.length<5)continue;
+        var n=Math.min(k.length,kk.length,10);
+        if(edist(k.slice(0,n),kk.slice(0,n),2)<=2)return mem[kk];
+      }
+    }
+    return null;
+  }
+  function memSet(ocrName,entry){
+    var k=normM(ocrName)||normM(entry.merchant); if(!k||k.length<2)return;
+    mem[k]={merchant:entry.merchant,cat:entry.cat,cur:entry.cur,t:Date.now()};
+    var ks=Object.keys(mem);
+    if(ks.length>200){ks.sort(function(a,b){return mem[a].t-mem[b].t;});delete mem[ks[0]];}
+    try{localStorage.setItem(MKEY,JSON.stringify(mem));}catch(e){}
+  }
   var worker=null;
 
   function load(k,d){try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}}
@@ -305,11 +345,14 @@
 
   function showReview(id,dataUrl,p){
     var card=$(id); if(!card)return;
+    var ocrName=p.merchant;
+    var learned=memGet(p.merchant);
+    if(learned){p.merchant=learned.merchant;p.cat=learned.cat||p.cat;p.cur=learned.cur||p.cur;p._rem=true;}
     var opts=CATS.map(function(c){return '<option'+(c===p.cat?' selected':'')+'>'+c+'</option>';}).join("");
     var curOpts=CURR.map(function(c){return '<option'+(c===p.cur?' selected':'')+'>'+c+'</option>';}).join("");
     var dval=/^\d{4}-\d{2}-\d{2}$/.test(p.date)?p.date:todayStr();
     card.innerHTML=
-      '<div class="review-head"><span>Please check this</span><span class="pill">from your photo</span></div>'+
+      '<div class="review-head"><span>Please check this</span><span class="pill">'+(p._rem?"I remembered this shop":"from your photo")+'</span></div>'+
       '<img class="thumb" src="'+dataUrl+'" alt="receipt">'+
       '<label class="field">Merchant</label><input id="'+id+'_m" value="'+esc(p.merchant)+'" placeholder="Store name">'+
       '<div style="height:10px"></div>'+
@@ -322,8 +365,10 @@
       '<div class="btn-row"><button class="btn btn-ghost btn-sm" data-x="'+id+'">Throw away</button>'+
       '<button class="btn btn-primary btn-sm" data-save="'+id+'">Looks right, save it</button></div>';
     card.querySelector("[data-save]").onclick=function(){
-      items.unshift({merchant:$(id+"_m").value.trim(),date:$(id+"_d").value.trim(),
-        amount:parseFloat($(id+"_a").value)||0,cat:$(id+"_c").value,cur:$(id+"_cur").value});
+      var entry={merchant:$(id+"_m").value.trim(),date:$(id+"_d").value.trim(),
+        amount:parseFloat($(id+"_a").value)||0,cat:$(id+"_c").value,cur:$(id+"_cur").value};
+      items.unshift(entry);
+      memSet(ocrName,entry);
       save();card.remove();render();
       toast("Saved. "+items.length+" receipt"+(items.length===1?"":"s")+" in your list. Ready for the next one.");
       window.scrollTo({top:0,behavior:"smooth"});};
