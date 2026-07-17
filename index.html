@@ -88,28 +88,28 @@
     </div>
     <div>
       <h1>Receipt Snap</h1>
-      <div class="sub">Snap a receipt &rarr; it lands in your spreadsheet</div>
+      <div class="sub">Take a photo of a receipt. It becomes a tidy list you can save.</div>
     </div>
   </header>
 
   <div class="privacy">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#215e56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v5c0 4-3 7-7 9-4-2-7-5-7-9V7z"/><path d="M9 12l2 2 4-4"/></svg>
-    <span>Runs entirely on your device. No account, no upload, nothing leaves your phone.</span>
+    <span>Everything stays on your phone. No account needed, and nothing is sent anywhere.</span>
   </div>
 
   <input id="cam" class="hide" type="file" accept="image/*" capture="environment" multiple>
   <button class="btn btn-primary" id="snapBtn">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-    Snap or add receipt
+    Take a photo of a receipt
   </button>
   <div class="steps">
-    <div class="step"><div class="n">1</div><span>Snap</span></div>
+    <div class="step"><div class="n">1</div><span>Take photo</span></div>
     <div class="arr" aria-hidden="true">&rarr;</div>
-    <div class="step"><div class="n">2</div><span>Check</span></div>
+    <div class="step"><div class="n">2</div><span>Check it</span></div>
     <div class="arr" aria-hidden="true">&rarr;</div>
-    <div class="step"><div class="n">3</div><span>Export</span></div>
+    <div class="step"><div class="n">3</div><span>Save file</span></div>
   </div>
-  <div class="note">On a phone this opens the camera; on a laptop, your files. Add several at once.</div>
+  <div class="note">On a phone, this opens your camera. On a computer, it opens your saved pictures.</div>
 
   <div id="reviewZone"></div>
 
@@ -118,12 +118,12 @@
       <span>Your expenses</span>
       <span class="pill" id="count">0 items</span>
     </div>
-    <div id="listZone"><div class="empty">No receipts yet. Snap your first one above.</div></div>
+    <div id="listZone"><div class="empty">No receipts yet. Tap the green button above to add your first one.</div></div>
     <div class="total-bar hide" id="totalBar"><span>Total</span><span id="grand">0.00</span></div>
   </div>
 
   <details>
-    <summary>Settings &amp; optional AI vision</summary>
+    <summary>Settings</summary>
     <div class="set-body">
       <label class="field" for="curSel">Default currency</label>
       <select id="curSel">
@@ -131,35 +131,35 @@
         <option value="EUR">EUR &euro;</option><option value="GBP">GBP &pound;</option>
       </select>
       <div style="height:12px"></div>
-      <label class="field" for="dateFmt">Date order when ambiguous</label>
-      <select id="dateFmt"><option value="MDY">Month / Day / Year (US)</option><option value="DMY">Day / Month / Year</option></select>
+      <label class="field" for="dateFmt">How dates are written</label>
+      <select id="dateFmt"><option value="MDY">Month first, like 12/31/2026 (American)</option><option value="DMY">Day first, like 31.12.2026 (European)</option></select>
       <div style="height:14px"></div>
-      <label class="field" for="gkey">Google Gemini API key (optional, for sharper photo reading)</label>
+      <label class="field" for="gkey">For advanced users: Google AI key (optional)</label>
       <input id="gkey" type="password" placeholder="Paste your own key to enable AI vision" autocomplete="off">
-      <div class="note">Optional. Your key stays on this device and calls Google directly. We never see it and there is no charge from us. Leave blank to use the built-in on-device reader (free, fully offline after first load).</div>
+      <div class="note">You can skip this. The app already reads receipts by itself, free of charge. If you have your own Google AI key, pasting it here makes the reading more accurate. The key stays on your phone.</div>
     </div>
   </details>
 
   <div class="privacy" id="a2hs" style="background:#f2ede2;border-color:#e2d7bd;color:#6d5a2e;margin-top:12px">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6d5a2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-    <span><b>Keep it handy:</b> open your browser menu and choose <b>Add to Home Screen</b>. Receipt Snap becomes an app icon and works offline.</span>
+    <span><b>Tip:</b> in your browser, open the menu (the three dots or the share button) and tap <b>Add to Home Screen</b>. This puts Receipt Snap on your phone like a normal app.</span>
   </div>
 
 
   <div class="note" style="margin-top:14px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff">
-    <b>Please note:</b> Receipt Snap is a personal record-keeping helper, not accounting, tax or financial advice.
-    Text recognition can misread receipts, so always check each entry before saving. Verify your figures
-    against original receipts before using them for taxes or filings. Your data stays on this device (and is lost if
-    you clear browser data), so keep your original receipts and export backups regularly. Provided as-is, without warranty.
+    <b>Please note:</b> This app helps you keep records. It does not give tax or financial advice.
+    The camera can sometimes read a receipt wrong, so please check every entry before you save it.
+    Keep your paper receipts, and save your Excel file from time to time as a backup.
+    If you ever clear your browser's saved data, the list in this app will be erased.
   </div>
 
-  <div class="note" id="engineNote">Built-in reader loads on first scan (~a few MB, once). Best results: flat receipt, good light, fill the frame.</div>
+  <div class="note" id="engineNote">The very first scan takes a little longer while the reader gets ready. For best results: lay the receipt flat, use good light, and hold the camera close.</div>
 </div>
 
 <div class="foot">
   <div class="foot-in">
-    <button class="btn btn-ghost btn-sm" id="csvBtn">Export CSV</button>
-    <button class="btn btn-primary btn-sm" id="xlsxBtn">Export to Excel</button>
+    <button class="btn btn-ghost btn-sm" id="csvBtn">Save as CSV</button>
+    <button class="btn btn-primary btn-sm" id="xlsxBtn">Save as Excel file</button>
   </div>
 </div>
 
@@ -205,7 +205,7 @@
     if(!/^image\//.test(file.type))return;
     var id="r"+Date.now()+Math.random().toString(36).slice(2,6);
     var card=document.createElement("div");card.className="card";card.id=id;
-    card.innerHTML='<div class="review-head"><span>Reading receipt&hellip;</span></div>'+
+    card.innerHTML='<div class="review-head"><span>Reading your receipt, one moment&hellip;</span></div>'+
       '<div class="prog"><i id="'+id+'_p"></i></div><div class="muted" id="'+id+'_s">Starting&hellip;</div>';
     $("reviewZone").prepend(card);
     downscale(file,1600,function(dataUrl){
@@ -284,7 +284,7 @@
     var opts=CATS.map(function(c){return '<option'+(c===p.cat?' selected':'')+'>'+c+'</option>';}).join("");
     var curOpts=["USD","CHF","EUR","GBP"].map(function(c){return '<option'+(c===p.cur?' selected':'')+'>'+c+'</option>';}).join("");
     card.innerHTML=
-      '<div class="review-head"><span>Check &amp; save</span><span class="pill">just read</span></div>'+
+      '<div class="review-head"><span>Please check this</span><span class="pill">from your photo</span></div>'+
       '<img class="thumb" src="'+dataUrl+'" alt="receipt">'+
       '<label class="field">Merchant</label><input id="'+id+'_m" value="'+esc(p.merchant)+'" placeholder="Store name">'+
       '<div style="height:10px"></div>'+
@@ -294,8 +294,8 @@
       '<div class="grid2"><div><label class="field">Category</label><select id="'+id+'_c">'+opts+'</select></div>'+
       '<div><label class="field">Currency</label><select id="'+id+'_cur">'+curOpts+'</select></div></div>'+
       '<div style="height:12px"></div>'+
-      '<div class="btn-row"><button class="btn btn-ghost btn-sm" data-x="'+id+'">Discard</button>'+
-      '<button class="btn btn-primary btn-sm" data-save="'+id+'">Save to list</button></div>';
+      '<div class="btn-row"><button class="btn btn-ghost btn-sm" data-x="'+id+'">Throw away</button>'+
+      '<button class="btn btn-primary btn-sm" data-save="'+id+'">Looks right, save it</button></div>';
     card.querySelector("[data-save]").onclick=function(){
       items.unshift({merchant:$(id+"_m").value.trim(),date:$(id+"_d").value.trim(),
         amount:parseFloat($(id+"_a").value)||0,cat:$(id+"_c").value,cur:$(id+"_cur").value});
@@ -305,7 +305,7 @@
 
   function render(){
     var z=$("listZone");
-    if(!items.length){z.innerHTML='<div class="empty">No receipts yet. Snap your first one above.</div>';
+    if(!items.length){z.innerHTML='<div class="empty">No receipts yet. Tap the green button above to add your first one.</div>';
       $("totalBar").classList.add("hide");$("count").textContent="0 items";return;}
     var byCur={};
     var rows=items.map(function(it,i){
@@ -329,14 +329,14 @@
     return [head].concat(body);
   }
   $("xlsxBtn").onclick=function(){
-    if(!items.length)return alert("Add a receipt first.");
+    if(!items.length)return alert("Please add a receipt first.");
     var ws=XLSX.utils.aoa_to_sheet(rowsForExport());
     ws["!cols"]=[{wch:12},{wch:26},{wch:20},{wch:10},{wch:9}];
     var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Expenses");
     XLSX.writeFile(wb,"expenses_"+new Date().toISOString().slice(0,10)+".xlsx");
   };
   $("csvBtn").onclick=function(){
-    if(!items.length)return alert("Add a receipt first.");
+    if(!items.length)return alert("Please add a receipt first.");
     var csv=rowsForExport().map(function(r){return r.map(function(c){return '"'+String(c==null?"":c).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
     var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
     a.download="expenses_"+new Date().toISOString().slice(0,10)+".csv";a.click();
