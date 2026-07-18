@@ -91,6 +91,12 @@
     color:var(--navy);font-size:11.5px;font-weight:650;display:flex;align-items:center;justify-content:center;flex:none}
   .step span{font-size:12.5px;color:var(--grey);font-weight:550}
   .step .arr{color:var(--line);flex:none}
+  .fnote{font-size:12px;margin:5px 2px 0;line-height:1.4}
+  .fnote.ok{color:var(--tint-t)}
+  .fnote.ok::before{content:"";display:inline-block;width:7px;height:11px;border-right:1.8px solid var(--tint-t);
+    border-bottom:1.8px solid var(--tint-t);transform:rotate(40deg);margin:0 7px 0 2px}
+  .fnote.alt{color:var(--warn-t);background:var(--warn-bg);border:1px solid var(--warn-b);
+    border-radius:8px;padding:6px 10px;cursor:pointer;display:inline-block;margin-top:6px}
 </style>
 </head>
 <body>
@@ -174,7 +180,7 @@
     If your browser's saved data is ever cleared, only the list inside this app is emptied. Your saved files are not touched, and you can bring one back with the button 'Load entries from a saved file'.
   </div>
 
-  <div class="note" id="engineNote">The very first scan takes a little longer while the reader gets ready. For best results: lay the receipt flat, use good light, and hold the camera close.</div>
+  <div class="note" id="engineNote">The app reads each receipt twice, with two different readers, and tells you when they agree. The very first scan takes longer while they get ready. For best results: lay the receipt flat, use good light, and hold the camera close.</div>
 </div>
 
 <div class="foot">
@@ -185,6 +191,12 @@
   </div>
 </div>
 
+<script type="module">
+try{
+  const mod=await import("https://cdn.jsdelivr.net/npm/ppu-paddle-ocr@6.1.0/web/+esm");
+  window.__PP=mod; window.dispatchEvent(new Event("pp-ready"));
+}catch(e){ window.__PPFAIL=true; window.dispatchEvent(new Event("pp-ready")); }
+</script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"></script>
 <script>
@@ -251,6 +263,61 @@
     try{localStorage.setItem(MKEY,JSON.stringify(mem));}catch(e){}
   }
   var worker=null;
+  var ppInitP=null;
+  function ppInit(){
+    if(ppInitP)return ppInitP;
+    ppInitP=new Promise(function(resolve,reject){
+      function go(){
+        if(!window.__PP)return reject(new Error("pp unavailable"));
+        try{
+          var svc=new window.__PP.PaddleOcrService();
+          svc.initialize().then(function(){resolve(svc);}).catch(reject);
+        }catch(e){reject(e);}
+      }
+      if(window.__PP||window.__PPFAIL)go();
+      else{window.addEventListener("pp-ready",go,{once:true});setTimeout(go,20000);}
+    });
+    return ppInitP;
+  }
+  function ppRead(dataUrl){
+    return ppInit().then(function(svc){
+      return new Promise(function(res,rej){
+        var img=new Image();
+        img.onload=function(){
+          var c=document.createElement("canvas");c.width=img.width;c.height=img.height;
+          c.getContext("2d").drawImage(img,0,0);
+          svc.recognize(c,{flatten:true}).then(function(r){
+            res({fields:parseText(String(r.text||"")),conf:r.confidence||0});
+          }).catch(rej);
+        };
+        img.onerror=rej; img.src=dataUrl;
+      });
+    });
+  }
+  function mergeReads(pp,ts,conf){
+    function stat(a,b,eq){if(a&&b)return eq?"agree":"conflict";return null;}
+    var out={cur:pp.cur,cat:pp.cat!=="Other"?pp.cat:ts.cat,_conf:conf,_m:{}};
+    var aP=pp.total,aT=ts.total;
+    var eqA=aP&&aT&&Math.abs(parseFloat(aP)-parseFloat(aT))<0.01;
+    out.total=aP||aT||"";
+    out._m.total={st:stat(aP,aT,eqA),alt:(aP&&aT&&!eqA)?aT:null};
+    var eqD=pp.date&&ts.date&&pp.date===ts.date;
+    out.date=pp.date||ts.date||"";
+    out._m.date={st:stat(pp.date,ts.date,eqD),alt:(pp.date&&ts.date&&!eqD)?ts.date:null};
+    var nP=normM(pp.merchant),nT=normM(ts.merchant);
+    var eqM=nP&&nT&&(nP===nT||nP.indexOf(nT)>=0||nT.indexOf(nP)>=0);
+    out.merchant=pp.merchant||ts.merchant||"";
+    out._m.merchant={st:stat(pp.merchant,ts.merchant,eqM),alt:(pp.merchant&&ts.merchant&&!eqM)?ts.merchant:null};
+    if(pp.cur===settings.cur&&ts.cur!==settings.cur)out.cur=ts.cur;
+    return out;
+  }
+  function fieldNote(m,key){
+    if(!m||!m[key])return "";
+    var s=m[key];
+    if(s.st==="agree")return '<div class="fnote ok">Both readings match</div>';
+    if(s.st==="conflict"&&s.alt)return '<div class="fnote alt" data-k="'+key+'" data-alt="'+esc(String(s.alt))+'">Other reading: '+esc(String(s.alt))+' (tap to use)</div>';
+    return "";
+  }
 
   function load(k,d){try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}}
   function save(){localStorage.setItem(LSK,JSON.stringify(items));localStorage.setItem(SET,JSON.stringify(settings));}
@@ -261,7 +328,7 @@
   $("curSel").onchange=function(){settings.cur=this.value;save();};
   $("dateFmt").onchange=function(){settings.fmt=this.value;save();};
   $("gkey").oninput=function(){settings.gkey=this.value.trim();save();
-    $("engineNote").textContent=settings.gkey?"AI vision on: photos are read with your Gemini key.":"Built-in reader loads on first scan (~a few MB, once).";};
+    $("engineNote").textContent=settings.gkey?"AI vision on: photos are read with your Gemini key.":"The two built-in readers load on the first scan (once).";};
 
   $("snapBtn").onclick=function(){$("cam").click();};
   $("cam").onchange=function(e){var fs=Array.prototype.slice.call(e.target.files||[]);e.target.value="";fs.forEach(handleFile);};
@@ -290,10 +357,21 @@
     downscale(file,1600,function(dataUrl){
       if(!dataUrl){card.remove();return;}
       var useAI=!!settings.gkey;
-      var run=useAI?geminiRead(dataUrl):tesseractRead(dataUrl,id);
+      var run;
+      if(useAI){ run=geminiRead(dataUrl); }
+      else{
+        var pPP=ppRead(dataUrl).catch(function(){return null;});
+        var pTS=tesseractRead(dataUrl,id).catch(function(){return null;});
+        run=Promise.all([pPP,pTS]).then(function(res2){
+          var pp=res2[0], ts=res2[1];
+          if(pp&&ts)return mergeReads(pp.fields,ts,pp.conf);
+          if(pp){pp.fields._conf=pp.conf;return pp.fields;}
+          if(ts)return ts;
+          throw new Error("no read");
+        });
+      }
       run.then(function(parsed){ showReview(id,dataUrl,parsed); })
-         .catch(function(err){ tesseractRead(dataUrl,id).then(function(p){showReview(id,dataUrl,p);})
-             .catch(function(){ showReview(id,dataUrl,{merchant:"",date:"",total:"",cur:settings.cur,cat:"Other"}); }); });
+         .catch(function(){ showReview(id,dataUrl,{merchant:"",date:"",total:"",cur:settings.cur,cat:"Other"}); });
     });
   }
 
@@ -381,23 +459,33 @@
     var card=$(id); if(!card)return;
     var ocrName=p.merchant;
     var learned=memGet(p.merchant);
-    if(learned){p.merchant=learned.merchant;p.cat=learned.cat||p.cat;p.cur=learned.cur||p.cur;p._rem=true;}
+    if(learned){p.merchant=learned.merchant;p.cat=learned.cat||p.cat;p.cur=learned.cur||p.cur;p._rem=true;if(p._m)p._m.merchant=null;}
     var opts=CATS.map(function(c){return '<option'+(c===p.cat?' selected':'')+'>'+c+'</option>';}).join("");
     var curOpts=CURR.map(function(c){return '<option'+(c===p.cur?' selected':'')+'>'+c+'</option>';}).join("");
     var dval=/^\d{4}-\d{2}-\d{2}$/.test(p.date)?p.date:todayStr();
     card.innerHTML=
-      '<div class="review-head"><span>Please check this</span><span class="pill">'+(p._rem?"I remembered this shop":"my best reading")+'</span></div>'+
+      '<div class="review-head"><span>Please check this</span><span class="pill">'+(p._rem?"I remembered this shop":(p._conf>=0.9?"read clearly":(p._conf&&p._conf<0.75?"hard to read":"my best reading")))+'</span></div>'+
       '<img class="thumb" src="'+dataUrl+'" alt="receipt">'+
-      '<label class="field">Merchant</label><input id="'+id+'_m" value="'+esc(p.merchant)+'" placeholder="Store name">'+
+      '<label class="field">Merchant</label><input id="'+id+'_m" value="'+esc(p.merchant)+'" placeholder="Store name">'+fieldNote(p._m,"merchant")+
       '<div style="height:10px"></div>'+
-      '<div class="grid2"><div><label class="field">Date</label><input id="'+id+'_d" type="date" value="'+dval+'"></div>'+
-      '<div><label class="field">Amount</label><input id="'+id+'_a" inputmode="decimal" value="'+esc(p.total)+'" placeholder="0.00"></div></div>'+
+      '<div class="grid2"><div><label class="field">Date</label><input id="'+id+'_d" type="date" value="'+dval+'">'+fieldNote(p._m,"date")+'</div>'+
+      '<div><label class="field">Amount</label><input id="'+id+'_a" inputmode="decimal" value="'+esc(p.total)+'" placeholder="0.00">'+fieldNote(p._m,"total")+'</div></div>'+
       '<div style="height:10px"></div>'+
       '<div class="grid2"><div><label class="field">Category</label><select id="'+id+'_c">'+opts+'</select></div>'+
       '<div><label class="field">Currency</label><select id="'+id+'_cur">'+curOpts+'</select></div></div>'+
       '<div style="height:12px"></div>'+
       '<div class="btn-row"><button class="btn btn-ghost btn-sm" data-x="'+id+'">Throw away</button>'+
       '<button class="btn btn-primary btn-sm" data-save="'+id+'">Looks right, save it</button></div>';
+    Array.prototype.forEach.call(card.querySelectorAll(".fnote.alt"),function(el){
+      el.onclick=function(){
+        var key=el.getAttribute("data-k");
+        var map={merchant:"_m",date:"_d",total:"_a"};
+        var inp=$(id+map[key]); var prev=inp.value;
+        inp.value=el.getAttribute("data-alt");
+        el.setAttribute("data-alt",prev);
+        el.innerHTML="Other reading: "+esc(prev)+" (tap to use)";
+      };
+    });
     card.querySelector("[data-save]").onclick=function(){
       var entry={merchant:$(id+"_m").value.trim(),date:$(id+"_d").value.trim(),
         amount:parseFloat($(id+"_a").value)||0,cat:$(id+"_c").value,cur:$(id+"_cur").value};
