@@ -167,7 +167,9 @@
 
   <div class="note" style="margin-top:14px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff">
     <b>Please note:</b> This app helps you keep records. It does not give tax or financial advice.
-    The camera can sometimes read a receipt wrong, so please check every entry before you save it.
+    <b>How well does it read?</b> On flat, well-lit receipts it usually gets everything right.
+    On crumpled or faded receipts it will often need your help with a field or two.
+    That is why the app always shows you what it read, so please check every entry before you save it.
     Keep your paper receipts, and save your Excel file from time to time. Saved files stay safely on your phone.
     If your browser's saved data is ever cleared, only the list inside this app is emptied. Your saved files are not touched, and you can bring one back with the button 'Load entries from a saved file'.
   </div>
@@ -384,7 +386,7 @@
     var curOpts=CURR.map(function(c){return '<option'+(c===p.cur?' selected':'')+'>'+c+'</option>';}).join("");
     var dval=/^\d{4}-\d{2}-\d{2}$/.test(p.date)?p.date:todayStr();
     card.innerHTML=
-      '<div class="review-head"><span>Please check this</span><span class="pill">'+(p._rem?"I remembered this shop":"from your photo")+'</span></div>'+
+      '<div class="review-head"><span>Please check this</span><span class="pill">'+(p._rem?"I remembered this shop":"my best reading")+'</span></div>'+
       '<img class="thumb" src="'+dataUrl+'" alt="receipt">'+
       '<label class="field">Merchant</label><input id="'+id+'_m" value="'+esc(p.merchant)+'" placeholder="Store name">'+
       '<div style="height:10px"></div>'+
