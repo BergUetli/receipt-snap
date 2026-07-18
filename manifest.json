@@ -1,6 +1,6 @@
 {
-  "name": "Receipt Snap",
-  "short_name": "Receipt Snap",
+  "name": "Receipt Robin",
+  "short_name": "Receipt Robin",
   "description": "Snap a receipt and it lands in your spreadsheet. Private, on-device.",
   "start_url": ".",
   "display": "standalone",

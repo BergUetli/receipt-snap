@@ -1,4 +1,4 @@
-const C="rsnap-v3";
+const C="rsnap-v4";
 const CORE=["./","./index.html","./manifest.json","./icon-192.png","./icon-512.png"];
 const CACHEABLE=/(cdn\.jsdelivr\.net|raw\.githubusercontent\.com|media\.githubusercontent\.com)/;
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(CORE)));self.skipWaiting();});
