@@ -406,7 +406,7 @@ try{
       });
   }
 
-  var AMT=/(?:CHF|USD|EUR|GBP)?\s*[$€£]?\s*(\d{1,4}[.,]\d{2})\b/g;
+  var AMT=/(?:CHF|USD|EUR|GBP)?\s*[$€£]?\s*(\d{1,4}[.,]\d{2})(?![.\d])/g;
   function amountsOf(line){var out=[],m;AMT.lastIndex=0;while((m=AMT.exec(line))){out.push(parseFloat(m[1].replace(",",".")));}return out;}
   var MON={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
   function parseDate(lines){
