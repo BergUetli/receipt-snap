@@ -171,7 +171,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"></script>
 <script>
 (function(){
   var LSK="receiptsnap.v1", SET="receiptsnap.settings.v1";
@@ -411,23 +411,72 @@
   }
   $("xlsxBtn").onclick=function(){
     if(!items.length)return alert("Please add a receipt first.");
-    var rows=rowsForExport();
-    var ws=XLSX.utils.aoa_to_sheet(rows);
-    ws["!cols"]=[{wch:14},{wch:30},{wch:22},{wch:12},{wch:10}];
-    ws["!rows"]=rows.map(function(_,i){return {hpt:i===0?30:26};});
-    var range=XLSX.utils.decode_range(ws["!ref"]);
-    for(var r=range.s.r;r<=range.e.r;r++){
-      for(var c=range.s.c;c<=range.e.c;c++){
-        var addr=XLSX.utils.encode_cell({r:r,c:c});
-        if(!ws[addr])continue;
-        ws[addr].s=(r===0)
-          ?{font:{sz:15,bold:true,color:{rgb:"FFFFFF"}},fill:{fgColor:{rgb:"1F3A5F"}},alignment:{vertical:"center"}}
-          :{font:{sz:14},alignment:{vertical:"center"}};
-        if(r>0&&c===3)ws[addr].s.numFmt="#,##0.00";
+    var NAVY="1F3A5F", TEAL="2E7D74", LINE="D9DEE7", BAND="F2F5F9", GREY="5A6475";
+    function bAll(c){return {top:{style:"thin",color:{rgb:c}},bottom:{style:"thin",color:{rgb:c}},left:{style:"thin",color:{rgb:c}},right:{style:"thin",color:{rgb:c}}};}
+    var aoa=[], sty=[], merges=[], hts=[];
+    function push(row,styles,h){aoa.push(row);sty.push(styles||[]);hts.push({hpt:h||24});}
+    var today=new Date(), ds=today.getFullYear()+"-"+("0"+(today.getMonth()+1)).slice(-2)+"-"+("0"+today.getDate()).slice(-2);
+    var titleS={font:{sz:17,bold:true,color:{rgb:"FFFFFF"}},fill:{fgColor:{rgb:NAVY}},alignment:{vertical:"center",horizontal:"left",indent:1}};
+    var subS={font:{sz:11,color:{rgb:"FFFFFF"}},fill:{fgColor:{rgb:NAVY}},alignment:{vertical:"center",horizontal:"left",indent:1}};
+    push(["Expense report","","","",""],[titleS,titleS,titleS,titleS,titleS],34);
+    merges.push({s:{r:0,c:0},e:{r:0,c:4}});
+    push(["Saved "+ds+"  -  "+items.length+" receipt"+(items.length===1?"":"s"),"","","",""],[subS,subS,subS,subS,subS],20);
+    merges.push({s:{r:1,c:0},e:{r:1,c:4}});
+    push(["","","","",""],[],8);
+    var headS={font:{sz:13,bold:true,color:{rgb:"FFFFFF"}},fill:{fgColor:{rgb:TEAL}},alignment:{vertical:"center"},border:bAll(TEAL)};
+    push(["Date","Merchant","Category","Amount","Currency"],[headS,headS,headS,headS,headS],26);
+    var sorted=items.slice().sort(function(a,b){return (a.date||"")<(b.date||"")?-1:1;});
+    for(var i=0;i<sorted.length;i++){
+      var it=sorted[i];
+      var base={font:{sz:13},alignment:{vertical:"center"},border:bAll(LINE)};
+      if(i%2===1)base.fill={fgColor:{rgb:BAND}};
+      var amtS=JSON.parse(JSON.stringify(base)); amtS.numFmt="#,##0.00"; amtS.alignment.horizontal="right";
+      var curS=JSON.parse(JSON.stringify(base)); curS.alignment.horizontal="center";
+      push([it.date,it.merchant,it.cat,it.amount,it.cur],[base,base,base,amtS,curS],24);
+    }
+    push(["","","","",""],[],8);
+    var byCur={}, byCat={};
+    items.forEach(function(it){
+      byCur[it.cur]=(byCur[it.cur]||0)+(it.amount||0);
+      var k=it.cat+"|"+it.cur; byCat[k]=(byCat[k]||0)+(it.amount||0);
+    });
+    var totLabS={font:{sz:14,bold:true},alignment:{vertical:"center"},border:{top:{style:"medium",color:{rgb:NAVY}}}};
+    var totAmtS={font:{sz:14,bold:true},numFmt:"#,##0.00",alignment:{vertical:"center",horizontal:"right"},border:{top:{style:"medium",color:{rgb:NAVY}}}};
+    var totCurS={font:{sz:14,bold:true},alignment:{vertical:"center",horizontal:"center"},border:{top:{style:"medium",color:{rgb:NAVY}}}};
+    var first=true;
+    Object.keys(byCur).forEach(function(c){
+      var lab=first?"Total":""; first=false;
+      push([lab,"","",byCur[c],c],[totLabS,totLabS,totLabS,totAmtS,totCurS],26);
+    });
+    push(["","","","",""],[],10);
+    var secS={font:{sz:12,bold:true,color:{rgb:GREY}},alignment:{vertical:"center"}};
+    push(["Spending by category","","","",""],[secS],20);
+    merges.push({s:{r:aoa.length-1,c:0},e:{r:aoa.length-1,c:2}});
+    var catRows=Object.keys(byCat).map(function(k){var p=k.split("|");return {cat:p[0],cur:p[1],amt:byCat[k]};});
+    catRows.sort(function(a,b){return b.amt-a.amt;});
+    catRows.forEach(function(cr){
+      var cS={font:{sz:12},alignment:{vertical:"center"},border:{bottom:{style:"thin",color:{rgb:LINE}}}};
+      var aS={font:{sz:12},numFmt:"#,##0.00",alignment:{vertical:"center",horizontal:"right"},border:{bottom:{style:"thin",color:{rgb:LINE}}}};
+      var uS={font:{sz:12},alignment:{vertical:"center",horizontal:"center"},border:{bottom:{style:"thin",color:{rgb:LINE}}}};
+      push(["",cr.cat,"",cr.amt,cr.cur],[cS,cS,cS,aS,uS],21);
+    });
+    push(["","","","",""],[],8);
+    var noteS={font:{sz:10,italic:true,color:{rgb:GREY}},alignment:{vertical:"center"}};
+    push(["Made with Receipt Snap. Please check entries against your paper receipts.","","","",""],[noteS],18);
+    merges.push({s:{r:aoa.length-1,c:0},e:{r:aoa.length-1,c:4}});
+    var ws=XLSX.utils.aoa_to_sheet(aoa);
+    ws["!cols"]=[{wch:13},{wch:30},{wch:22},{wch:12},{wch:10}];
+    ws["!rows"]=hts; ws["!merges"]=merges;
+    for(var r2=0;r2<aoa.length;r2++){
+      for(var c2=0;c2<5;c2++){
+        var st=sty[r2]&&sty[r2][c2]; if(!st)continue;
+        var addr=XLSX.utils.encode_cell({r:r2,c:c2});
+        if(!ws[addr])ws[addr]={t:"s",v:""};
+        ws[addr].s=st;
       }
     }
-    var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Expenses");
-    XLSX.writeFile(wb,"expenses_"+new Date().toISOString().slice(0,10)+".xlsx");
+    var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Expense report");
+    XLSX.writeFile(wb,"expenses_"+ds+".xlsx");
   };
   $("csvBtn").onclick=function(){
     if(!items.length)return alert("Please add a receipt first.");
@@ -448,7 +497,10 @@
         rows.forEach(function(r){
           if(!r||!r.length)return;
           if(String(r[0]).toLowerCase()==="date")return;
-          var it={date:String(r[0]||""),merchant:String(r[1]||""),cat:String(r[2]||"Other"),
+          var d0=r[0];
+          if(typeof d0==="number"&&d0>25569){var dd=new Date(Math.round((d0-25569)*86400*1000));
+            d0=dd.getFullYear()+"-"+("0"+(dd.getMonth()+1)).slice(-2)+"-"+("0"+dd.getDate()).slice(-2);}
+          var it={date:String(d0||""),merchant:String(r[1]||""),cat:String(r[2]||"Other"),
                   amount:parseFloat(r[3])||0,cur:String(r[4]||settings.cur)};
           if(!it.merchant&&!it.amount)return;
           var dup=items.some(function(x){return x.date===it.date&&x.merchant===it.merchant&&x.amount===it.amount;});
